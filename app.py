@@ -92,7 +92,15 @@ def image_to_base64(img):
 def load_densenet_model():
     try:
         with st.spinner("Loading AI model... Please wait"):
-            model = load_model("densenet121_brain_tumor_best.h5")
+            # Try to load local model first
+            try:
+                model = load_model("densenet121_brain_tumor_best.h5")
+            except FileNotFoundError:
+                # For cloud deployment, you can add model download logic here
+                st.error("❌ Model file not found. Please ensure densenet121_brain_tumor_best.h5 is available.")
+                st.info("📋 For deployment instructions, see MODEL_SETUP.md in the repository.")
+                st.stop()
+                return None
         st.success("✅ Model loaded successfully!")
         return model
     except Exception as e:
