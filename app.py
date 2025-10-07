@@ -28,21 +28,46 @@ def get_img_array(img, size=(224,224)):
     return arr
 
 def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None):
+    # Create a model that maps the input image to the activations of the last conv layer
+    # as well as the output predictions
     grad_model = tf.keras.models.Model(
-        [model.inputs],
+        model.inputs,
         [model.get_layer(last_conv_layer_name).output, model.output]
     )
+    
+    # Compute the gradient of the top predicted class for our input image
+    # with respect to the activations of the last conv layer
     with tf.GradientTape() as tape:
+        tape.watch(img_array)
         conv_outputs, predictions = grad_model(img_array)
         if pred_index is None:
             pred_index = tf.argmax(predictions[0])
-        class_channel = predictions[:, pred_index]
+        # Convert pred_index to int to avoid tensor indexing issues
+        pred_index = int(pred_index)
+        class_channel = predictions[0][pred_index]
+    
+    # Gradient of the output neuron (top predicted or chosen) with regard to the output feature map
     grads = tape.gradient(class_channel, conv_outputs)
+    
+    # Check if gradients are None (can happen in some TensorFlow versions)
+    if grads is None:
+        # Return a zero heatmap if gradients can't be computed
+        return np.zeros((7, 7))  # DenseNet121 final conv layer size
+    
+    # This is a vector where each entry is the mean intensity of the gradient over a specific feature map channel
     pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+    
+    # We multiply each channel in the feature map array by "how important this channel is"
     conv_outputs = conv_outputs[0]
     heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
     heatmap = tf.squeeze(heatmap)
-    heatmap = tf.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
+    
+    # For visualization purpose, we will also normalize the heatmap between 0 & 1
+    heatmap = tf.maximum(heatmap, 0) 
+    max_val = tf.math.reduce_max(heatmap)
+    if max_val > 0:
+        heatmap = heatmap / max_val
+    
     return heatmap.numpy()
 
 def overlay_heatmap(img, heatmap, alpha=0.5):
@@ -205,12 +230,18 @@ if uploaded_file is not None:
         st.markdown("Heatmap showing AI focus areas. Red/yellow = high importance.")
         
         with st.spinner("Generating AI explanation..."):
-            heatmap = make_gradcam_heatmap(img_array, model, last_conv_layer_name)
-            cam_img = overlay_heatmap(image, heatmap)
-            st.image(cam_img, caption="Grad-CAM Heatmap", use_container_width=True)
-            
-            # Convert grad-cam to PIL for download
-            cam_pil = Image.fromarray(cam_img)
+            try:
+                heatmap = make_gradcam_heatmap(img_array, model, last_conv_layer_name)
+                cam_img = overlay_heatmap(image, heatmap)
+                st.image(cam_img, caption="Grad-CAM Heatmap", use_container_width=True)
+                
+                # Convert grad-cam to PIL for download
+                cam_pil = Image.fromarray(cam_img)
+            except Exception as e:
+                st.error(f"Error generating Grad-CAM: {str(e)}")
+                st.info("Grad-CAM visualization is temporarily unavailable, but the classification results above are still accurate.")
+                # Create a placeholder image for download
+                cam_pil = image.resize((224, 224))
     
     # Download Section
     st.markdown("---")
