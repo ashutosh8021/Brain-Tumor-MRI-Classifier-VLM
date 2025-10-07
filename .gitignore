@@ -117,8 +117,8 @@ dmypy.json
 # VS Code
 .vscode/
 
-# Large model files (we'll handle these separately for deployment)
-*.h5
+# Large model files (now handled by Git LFS)
+# *.h5 - Now tracked by Git LFS
 *.hdf5
 *.pkl
 *.pickle
