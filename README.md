@@ -32,16 +32,20 @@ See the complete application workflow including:
 ## 📸 Screenshots
 
 ### Main Interface
-![Brain Tumor Classification Interface](https://raw.githubusercontent.com/ashutosh8021/brain-tumor-classification/main/demo-interface.png)
+![Brain Tumor Classification Interface](https://raw.githubusercontent.com/ashutosh8021/brain-tumor-classification/main/screenshots/main_interface.png)
 *Clean two-column layout with instant classification results and confidence scoring*
 
 ### Grad-CAM Analysis
-![Grad-CAM Heatmap Visualization](https://raw.githubusercontent.com/ashutosh8021/brain-tumor-classification/main/demo-gradcam.png)
+![Grad-CAM Heatmap Visualization](https://raw.githubusercontent.com/ashutosh8021/brain-tumor-classification/main/screenshots/gradcam_demo.png)
 *AI explanation through heatmap visualization showing decision-making process*
 
 ### Real-time Results
-![Classification Results](https://raw.githubusercontent.com/ashutosh8021/brain-tumor-classification/main/demo-results.png)
+![Classification Results](https://raw.githubusercontent.com/ashutosh8021/brain-tumor-classification/main/screenshots/classification_results.png)
 *Color-coded confidence levels and detailed medical information*
+
+### Download Features
+![Download Features](https://raw.githubusercontent.com/ashutosh8021/brain-tumor-classification/main/screenshots/download_features.png)
+*Export analysis results and visualizations for record keeping*
 
 ## 🛠️ Technology Stack
 
