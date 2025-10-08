@@ -72,7 +72,7 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None
         return np.zeros((224, 224), dtype=np.float32)
 
 def overlay_heatmap(img, heatmap, alpha=0.4):
-    """Create a colored heatmap overlay on the original image"""
+    """Create a red-yellow heatmap overlay on the original image"""
     try:
         # Convert PIL image to numpy array
         img_array = np.array(img.resize((224, 224)))
@@ -81,27 +81,39 @@ def overlay_heatmap(img, heatmap, alpha=0.4):
         if heatmap.shape != (224, 224):
             heatmap = cv2.resize(heatmap, (224, 224))
         
-        # Normalize heatmap to 0-255 range
+        # Normalize heatmap to 0-1 range
         heatmap = np.clip(heatmap, 0, 1)
-        heatmap = (heatmap * 255).astype(np.uint8)
         
-        # Apply colormap to create red-yellow visualization
-        # COLORMAP_JET: blue (low) -> green -> yellow -> red (high)
-        heatmap_colored = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+        # Create custom red-yellow colormap
+        # High values (important areas) = Red/Yellow
+        # Low values (less important) = Transparent/Blue
+        colored_heatmap = np.zeros((224, 224, 3), dtype=np.uint8)
         
-        # Convert from BGR to RGB (OpenCV uses BGR)
-        heatmap_colored = cv2.cvtColor(heatmap_colored, cv2.COLOR_BGR2RGB)
+        # Create red-yellow gradient based on heatmap values
+        for i in range(224):
+            for j in range(224):
+                intensity = heatmap[i, j]
+                if intensity > 0.1:  # Only show visible colors for significant activations
+                    if intensity > 0.7:  # High importance - Red
+                        colored_heatmap[i, j] = [255, int(255 * (1-intensity)), 0]  # Red to Red-Orange
+                    elif intensity > 0.4:  # Medium importance - Orange to Yellow
+                        colored_heatmap[i, j] = [255, int(255 * intensity), 0]  # Orange to Yellow
+                    else:  # Low importance - Yellow to Green
+                        colored_heatmap[i, j] = [int(255 * intensity), 255, 0]  # Yellow-Green
         
-        # Ensure image is RGB
+        # Convert BGR to RGB for proper display
+        colored_heatmap = cv2.cvtColor(colored_heatmap, cv2.COLOR_BGR2RGB)
+        
+        # Ensure original image is RGB
         if len(img_array.shape) == 3 and img_array.shape[2] == 3:
             img_rgb = img_array
         else:
             img_rgb = cv2.cvtColor(img_array, cv2.COLOR_GRAY2RGB)
         
-        # Create overlay: blend original image with colored heatmap
-        overlay = cv2.addWeighted(img_rgb, 1-alpha, heatmap_colored, alpha, 0)
+        # Blend the images
+        overlay = cv2.addWeighted(img_rgb, 1-alpha, colored_heatmap, alpha, 0)
         
-        return overlay.astype(np.uint8)
+        return overlay
         
     except Exception as e:
         print(f"Error in overlay_heatmap: {e}")
