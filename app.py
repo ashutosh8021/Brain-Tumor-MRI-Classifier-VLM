@@ -28,70 +28,59 @@ def get_img_array(img, size=(224,224)):
     return arr
 
 def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None):
-    """Generate a working Grad-CAM heatmap"""
+    """Bulletproof Grad-CAM that works in production"""
     try:
-        # Create a model that maps the input image to the activations
+        # This is the EXACT working approach from marine classification
         grad_model = tf.keras.models.Model(
-            model.inputs,
-            [model.get_layer(last_conv_layer_name).output, model.output]
+            inputs=[model.inputs],
+            outputs=[model.get_layer(last_conv_layer_name).output, model.output]
         )
         
-        # Compute the gradient
         with tf.GradientTape() as tape:
             conv_outputs, predictions = grad_model(img_array)
             if pred_index is None:
                 pred_index = tf.argmax(predictions[0])
-            class_channel = predictions[0][pred_index]
+            class_channel = predictions[:, pred_index]
         
-        # Get the gradients
         grads = tape.gradient(class_channel, conv_outputs)
-        
-        # Pool the gradients
         pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
         
-        # Weight the conv output with the gradients
         conv_outputs = conv_outputs[0]
         heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
         heatmap = tf.squeeze(heatmap)
-        
-        # Normalize
         heatmap = tf.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
-        
-        # Resize to image size
-        heatmap = tf.image.resize([heatmap[..., tf.newaxis]], [224, 224])
-        heatmap = tf.squeeze(heatmap)
-        
-        return heatmap.numpy()
+        heatmap = tf.image.resize(heatmap[..., tf.newaxis], [224, 224])
+        return tf.squeeze(heatmap).numpy()
         
     except Exception as e:
-        print(f"Grad-CAM error: {e}")
+        st.error(f"Grad-CAM failed: {e}")
         return np.zeros((224, 224))
 
 def overlay_heatmap(image, heatmap, alpha=0.4):
-    """Simple working overlay function"""
+    """Production-ready overlay - same as marine classification"""
     try:
-        # Convert image to array
-        img_array = np.array(image.resize((224, 224)))
+        # Convert to arrays
+        img = np.array(image.resize((224, 224)))
+        heatmap = np.array(heatmap)
         
-        # Ensure heatmap is right size
-        if heatmap.shape != (224, 224):
-            heatmap = cv2.resize(heatmap, (224, 224))
-        
-        # Convert heatmap to colormap
+        # Normalize heatmap
+        heatmap = (heatmap - heatmap.min()) / (heatmap.max() - heatmap.min())
         heatmap = np.uint8(255 * heatmap)
-        heatmap_colored = cv2.applyColorMap(heatmap, cv2.COLORMAP_HOT)
-        heatmap_colored = cv2.cvtColor(heatmap_colored, cv2.COLOR_BGR2RGB)
         
-        # Ensure img is RGB
-        if len(img_array.shape) == 2:
-            img_array = cv2.cvtColor(img_array, cv2.COLOR_GRAY2RGB)
+        # Use JET colormap (most reliable across environments)
+        colored_heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+        colored_heatmap = cv2.cvtColor(colored_heatmap, cv2.COLOR_BGR2RGB)
         
-        # Blend
-        superimposed_img = cv2.addWeighted(img_array, 1-alpha, heatmap_colored, alpha, 0)
-        return superimposed_img
+        # Ensure RGB
+        if len(img.shape) == 2:
+            img = np.stack([img, img, img], axis=-1)
+        
+        # Overlay
+        result = img * (1 - alpha) + colored_heatmap * alpha
+        return result.astype(np.uint8)
         
     except Exception as e:
-        print(f"Overlay error: {e}")
+        st.error(f"Overlay failed: {e}")
         return np.array(image.resize((224, 224)))
 
 # Helper functions for enhancements
