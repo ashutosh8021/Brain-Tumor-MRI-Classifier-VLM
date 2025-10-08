@@ -40,9 +40,8 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None
             conv_outputs, predictions = grad_model(img_array)
             if pred_index is None:
                 pred_index = tf.argmax(predictions[0])
-            # Convert tensor to int to avoid indexing issues
-            pred_index = int(pred_index)
-            class_channel = predictions[0][pred_index]
+            # Use tf.gather instead of direct indexing to avoid conversion issues
+            class_channel = tf.gather(predictions[0], pred_index)
         
         grads = tape.gradient(class_channel, conv_outputs)
         pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
