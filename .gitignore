@@ -152,9 +152,6 @@ datasets/
 *.csv
 *.json
 
-# Screenshots folder (we'll add these manually)
-screenshots/
-
 # Local config files
 config.local.py
 secrets.toml
