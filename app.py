@@ -57,37 +57,31 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None
         st.error(f"Grad-CAM failed: {e}")
         return np.zeros((224, 224))
 
-def overlay_heatmap(image, heatmap, alpha=0.6):
-    """Cloud-compatible overlay with manual red/yellow colormap"""
+def overlay_heatmap(image, heatmap, alpha=0.4):
+    """OpenCV-based overlay with proper error handling for cloud deployment"""
     try:
         # Convert to arrays
         img = np.array(image.resize((224, 224)))
         heatmap = np.array(heatmap)
         
-        # Normalize heatmap to 0-1
-        if heatmap.max() > heatmap.min():
-            heatmap = (heatmap - heatmap.min()) / (heatmap.max() - heatmap.min())
+        # Fix the division by zero issue that was causing NaN values
+        heatmap_min = heatmap.min()
+        heatmap_max = heatmap.max()
+        
+        # Normalize heatmap properly (avoiding division by zero)
+        if heatmap_max > heatmap_min and not np.isnan(heatmap_max) and not np.isnan(heatmap_min):
+            heatmap = (heatmap - heatmap_min) / (heatmap_max - heatmap_min)
         else:
-            heatmap = np.zeros_like(heatmap)
+            # If all values are the same or NaN, create a uniform low-intensity heatmap
+            heatmap = np.full_like(heatmap, 0.1)
         
-        # Create manual red-yellow colormap (more reliable than OpenCV)
-        colored_heatmap = np.zeros((224, 224, 3), dtype=np.uint8)
+        # Convert to uint8 safely (this was line 70 in the error)
+        heatmap = np.clip(heatmap, 0, 1)  # Ensure values are in [0,1]
+        heatmap = np.uint8(255 * heatmap)
         
-        # Apply colors based on heatmap intensity
-        # Red for high values, yellow for medium, blue for low
-        for i in range(224):
-            for j in range(224):
-                intensity = heatmap[i, j]
-                if intensity > 0.7:  # High importance - RED
-                    colored_heatmap[i, j] = [255, 0, 0]  # Pure red
-                elif intensity > 0.5:  # Medium-high - ORANGE
-                    colored_heatmap[i, j] = [255, 165, 0]  # Orange
-                elif intensity > 0.3:  # Medium - YELLOW
-                    colored_heatmap[i, j] = [255, 255, 0]  # Yellow
-                elif intensity > 0.1:  # Low - GREEN
-                    colored_heatmap[i, j] = [0, 255, 0]  # Green
-                else:  # Very low - BLUE
-                    colored_heatmap[i, j] = [0, 0, 255]  # Blue
+        # Use OpenCV JET colormap (red=high, blue=low) - more advanced and reliable
+        colored_heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+        colored_heatmap = cv2.cvtColor(colored_heatmap, cv2.COLOR_BGR2RGB)
         
         # Ensure image is RGB
         if len(img.shape) == 2:
@@ -95,9 +89,13 @@ def overlay_heatmap(image, heatmap, alpha=0.6):
         elif img.shape[2] == 4:  # RGBA
             img = img[:, :, :3]
         
-        # Strong overlay for visibility
-        result = img.astype(np.float32) * (1 - alpha) + colored_heatmap.astype(np.float32) * alpha
-        return result.astype(np.uint8)
+        # Overlay with proper data types to avoid casting issues
+        img = img.astype(np.float32)
+        colored_heatmap = colored_heatmap.astype(np.float32)
+        
+        # Blend the images
+        result = img * (1 - alpha) + colored_heatmap * alpha
+        return np.clip(result, 0, 255).astype(np.uint8)
         
     except Exception as e:
         st.error(f"Overlay failed: {e}")
