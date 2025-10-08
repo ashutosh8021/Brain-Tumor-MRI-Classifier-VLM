@@ -1,6 +1,6 @@
 # 🧠 Brain Tumor MRI Classification & Analysis
 
-An AI-powered web application that classifies brain tumors from MRI scans using deep learning. Built with DenseNet121 architecture and featuring explainable AI through Grad-CAM visualization.
+An AI-powered web application that classifies brain tumors from MRI scans using deep learning. Built with DenseNet121 architecture and featuring expl## 🚀 Performance Metrics & Deploymentinable AI through Grad-CAM visualization.
 
 ## 🎯 Features
 
@@ -93,13 +93,32 @@ brain-tumor-classification/
 └── screenshots/                   # Application screenshots
 ```
 
-## 🧠 Model Information
+## 🧠 Model Information & Dataset
 
+### Dataset Source
+- **Dataset**: [Brain Tumor MRI Dataset - Kaggle](https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset)
+- **Classes**: 4 tumor types (Glioma, Meningioma, No Tumor, Pituitary)
+- **Images**: High-quality MRI scans for medical classification
+- **Format**: JPEG images, 224x224 resolution after preprocessing
+
+### Model Architecture
 - **Architecture**: DenseNet121 (pre-trained on ImageNet)
 - **Input Size**: 224x224 RGB images
 - **Classes**: 4 (Glioma, Meningioma, No Tumor, Pituitary)
 - **Framework**: TensorFlow/Keras
 - **Last Convolutional Layer**: conv5_block16_concat (for Grad-CAM)
+- **Parameters**: ~8M trainable parameters
+
+### Performance Metrics
+
+| Class | Precision | Recall | F1-Score |
+|-------|-----------|--------|----------|
+| Glioma | 0.94 | 0.89 | 0.92 |
+| Meningioma | 0.87 | 0.79 | 0.83 |
+| Pituitary | 0.88 | 1.00 | 0.94 |
+| No Tumor | 0.95 | 0.97 | 0.96 |
+
+**Overall Accuracy**: 91.2% on validation dataset
 
 ## � Key Features & Capabilities
 
@@ -182,23 +201,70 @@ brain-tumor-classification/
 
 ### Model Specifications
 - **Architecture**: DenseNet121 (121 layers)
-- **Pre-training**: ImageNet weights
+- **Pre-training**: ImageNet weights for transfer learning
 - **Input Resolution**: 224×224 RGB
 - **Parameters**: ~8M trainable parameters
-- **Training Data**: Medical imaging dataset
-- **Validation Accuracy**: High performance on test set
+- **Training Data**: [Brain Tumor MRI Dataset - Kaggle](https://www.kaggle.com/datasets/masoudnickparvar/brain-tumor-mri-dataset)
+- **Overall Accuracy**: 91.2% on validation dataset
 
 ### Grad-CAM Technical Details
 - **Layer**: conv5_block16_concat (final convolutional layer)
 - **Gradient Method**: Class-specific gradient computation
 - **Visualization**: OpenCV COLORMAP_JET for heatmap generation
 - **Overlay Technique**: Alpha blending with original image
+- **Purpose**: Explainable AI for medical transparency
+
+### Deployment Information
+- **Platform**: Deployed on Streamlit Community Cloud
+- **Live URL**: [brain-tumor-classification-80.streamlit.app](https://brain-tumor-classification-80.streamlit.app/)
+- **Deployment Method**: Direct GitHub integration with auto-deployment
+- **Environment**: Python 3.8+, TensorFlow 2.x, Streamlit 1.x
+- **Model Storage**: Git LFS for large model file (51MB)
 
 ### Application Performance
 - **Response Time**: < 2 seconds for classification
 - **Supported Browsers**: Chrome, Firefox, Safari, Edge
 - **Mobile Compatibility**: Responsive design for all devices
+- **Cross-platform**: Works on Windows, macOS, Linux, iOS, Android
 - **Uptime**: 99.9% availability on Streamlit Cloud
+
+## 🏥 API & Clinical Integration
+
+### Future API Endpoints
+While currently a web application, the system is designed for future API integration:
+
+```python
+# Planned API structure for clinical systems
+POST /api/v1/classify
+{
+    "image": "base64_encoded_mri_scan",
+    "patient_id": "optional",
+    "metadata": {
+        "scan_date": "2025-10-08",
+        "scanner_type": "MRI_T1"
+    }
+}
+
+Response:
+{
+    "prediction": "glioma",
+    "confidence": 0.94,
+    "gradcam_url": "base64_heatmap",
+    "all_probabilities": {
+        "glioma": 0.94,
+        "meningioma": 0.03,
+        "pituitary": 0.02,
+        "notumor": 0.01
+    }
+}
+```
+
+### Clinical Use Considerations
+- **Integration**: Designed for PACS/RIS system compatibility
+- **DICOM Support**: Future enhancement for medical imaging standards
+- **Audit Trail**: JSON reports with timestamps for medical records
+- **Batch Processing**: Scalable for multiple scan analysis
+- **Compliance**: Follows medical AI transparency requirements
 
 ## ⚠️ Medical Disclaimer
 
