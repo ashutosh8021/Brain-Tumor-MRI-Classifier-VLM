@@ -28,55 +28,85 @@ def get_img_array(img, size=(224,224)):
     return arr
 
 def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None):
-    # Create a model that maps the input image to the activations of the last conv layer
-    # as well as the output predictions
-    grad_model = tf.keras.models.Model(
-        model.inputs,
-        [model.get_layer(last_conv_layer_name).output, model.output]
-    )
-    
-    # Compute the gradient of the top predicted class for our input image
-    # with respect to the activations of the last conv layer
-    with tf.GradientTape() as tape:
-        tape.watch(img_array)
-        conv_outputs, predictions = grad_model(img_array)
-        if pred_index is None:
-            pred_index = tf.argmax(predictions[0])
-        # Convert pred_index to int to avoid tensor indexing issues
-        pred_index = int(pred_index)
-        class_channel = predictions[0][pred_index]
-    
-    # Gradient of the output neuron (top predicted or chosen) with regard to the output feature map
-    grads = tape.gradient(class_channel, conv_outputs)
-    
-    # Check if gradients are None (can happen in some TensorFlow versions)
-    if grads is None:
-        # Return a zero heatmap if gradients can't be computed
-        return np.zeros((7, 7))  # DenseNet121 final conv layer size
-    
-    # This is a vector where each entry is the mean intensity of the gradient over a specific feature map channel
-    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
-    
-    # We multiply each channel in the feature map array by "how important this channel is"
-    conv_outputs = conv_outputs[0]
-    heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
-    heatmap = tf.squeeze(heatmap)
-    
-    # For visualization purpose, we will also normalize the heatmap between 0 & 1
-    heatmap = tf.maximum(heatmap, 0) 
-    max_val = tf.math.reduce_max(heatmap)
-    if max_val > 0:
-        heatmap = heatmap / max_val
-    
-    return heatmap.numpy()
+    """Generate Grad-CAM heatmap for model predictions"""
+    try:
+        # Get the gradient of the output neuron (top predicted or chosen)
+        # with respect to the output feature map of the last conv layer
+        grad_model = tf.keras.Model(
+            model.inputs, 
+            [model.get_layer(last_conv_layer_name).output, model.output]
+        )
+        
+        with tf.GradientTape() as tape:
+            conv_outputs, predictions = grad_model(img_array)
+            if pred_index is None:
+                pred_index = tf.argmax(predictions[0])
+            class_channel = predictions[:, pred_index]
+        
+        # Compute gradients of the class output value with respect to feature map
+        grads = tape.gradient(class_channel, conv_outputs)
+        
+        if grads is None:
+            return np.zeros((224, 224), dtype=np.float32)
+        
+        # Pool the gradients over all the axes leaving out the channel dimension
+        pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+        
+        # Multiply each channel in the feature map array by 
+        # "how important this channel is" with regard to the top predicted class
+        conv_outputs = conv_outputs[0]
+        heatmap = conv_outputs @ pooled_grads[..., tf.newaxis]
+        heatmap = tf.squeeze(heatmap)
+        
+        # For visualization purpose, normalize the heatmap between 0 & 1
+        heatmap = tf.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
+        
+        # Resize to original image size
+        heatmap = tf.image.resize(tf.expand_dims(heatmap, -1), [224, 224])
+        heatmap = tf.squeeze(heatmap)
+        
+        return heatmap.numpy()
+        
+    except Exception as e:
+        print(f"Error in make_gradcam_heatmap: {e}")
+        return np.zeros((224, 224), dtype=np.float32)
 
-def overlay_heatmap(img, heatmap, alpha=0.5):
-    img = np.array(img.resize((224,224))).astype(np.uint8)
-    heatmap = cv2.resize(heatmap, (img.shape[1], img.shape[0]))
-    heatmap = np.uint8(255 * heatmap)
-    heatmap_color = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-    combined = cv2.addWeighted(img, 1-alpha, heatmap_color, alpha, 0)
-    return combined
+def overlay_heatmap(img, heatmap, alpha=0.4):
+    """Create a colored heatmap overlay on the original image"""
+    try:
+        # Convert PIL image to numpy array
+        img_array = np.array(img.resize((224, 224)))
+        
+        # Ensure heatmap is the right size and type
+        if heatmap.shape != (224, 224):
+            heatmap = cv2.resize(heatmap, (224, 224))
+        
+        # Normalize heatmap to 0-255 range
+        heatmap = np.clip(heatmap, 0, 1)
+        heatmap = (heatmap * 255).astype(np.uint8)
+        
+        # Apply colormap to create red-yellow visualization
+        # COLORMAP_JET: blue (low) -> green -> yellow -> red (high)
+        heatmap_colored = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+        
+        # Convert from BGR to RGB (OpenCV uses BGR)
+        heatmap_colored = cv2.cvtColor(heatmap_colored, cv2.COLOR_BGR2RGB)
+        
+        # Ensure image is RGB
+        if len(img_array.shape) == 3 and img_array.shape[2] == 3:
+            img_rgb = img_array
+        else:
+            img_rgb = cv2.cvtColor(img_array, cv2.COLOR_GRAY2RGB)
+        
+        # Create overlay: blend original image with colored heatmap
+        overlay = cv2.addWeighted(img_rgb, 1-alpha, heatmap_colored, alpha, 0)
+        
+        return overlay.astype(np.uint8)
+        
+    except Exception as e:
+        print(f"Error in overlay_heatmap: {e}")
+        # Return original image if overlay fails
+        return np.array(img.resize((224, 224)))
 
 # Helper functions for enhancements
 def get_confidence_color(confidence):
