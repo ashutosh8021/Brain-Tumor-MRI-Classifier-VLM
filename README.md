@@ -1,16 +1,30 @@
-# 🧠 Brain Tumor MRI Classification & Analysis
 
-An AI-powered web application that classifies brain tumors from MRI scans using deep learning. Built with DenseNet121 architecture and featuring expl## 🚀 Performance Metrics & Deploymentinable AI through Grad-CAM visualization.
+# 🧠 Brain Tumor MRI Classification & Analysis v2.0
+
+An AI-powered web application that classifies brain tumors from MRI scans using deep learning. Built with DenseNet121 architecture and featuring explainable AI through Grad-CAM visualization, VLM-generated clinical explanations, and automated failure detection.
 
 ## 🎯 Features
 
+### Phase 1 (Core Classification)
 - **4-Class Classification**: Glioma, Meningioma, Pituitary Tumor, No Tumor
-- **High Accuracy**: DenseNet121 model trained on medical imaging dataset
+- **High Accuracy**: DenseNet121 model trained on medical imaging dataset (91.2%)
 - **Explainable AI**: Grad-CAM heatmaps show AI decision-making process
 - **User-Friendly Interface**: Clean Streamlit web application
 - **Confidence Scoring**: Color-coded confidence levels for predictions
 - **Download Reports**: Export analysis results and visualizations
 - **Medical Information**: Detailed descriptions of each tumor type
+
+### Phase 2 (Advanced Analytics) ✨ NEW
+- **🤖 VLM Integration**: AI-generated clinical explanations using Groq's Llama-3.2-11B Vision model
+- **⚠️ Failure Detection**: Automated quality checks with three detection modes:
+  - Low Confidence: Predictions below confidence threshold
+  - High Entropy: Uncertain probability distributions
+  - Borderline Cases: Small margins between top predictions
+- **📊 Failure Dashboard**: Monitor and analyze cases triggering reliability alerts
+- **📈 Uncertainty Metrics**: Shannon entropy analysis and activation percentage tracking
+- **📋 Enhanced Reports v2.0**: Comprehensive JSON + PDF reports with explainability and reliability data
+- **📑 PDF Generation**: Professional printable reports with images, metrics, and clinical explanations
+- **🔍 Template Fallback**: Advanced rule-based explanations when VLM unavailable
 
 ## 🚀 Live Demo
 
@@ -50,9 +64,11 @@ See the complete application workflow including:
 ## 🛠️ Technology Stack
 
 - **Deep Learning**: TensorFlow/Keras, DenseNet121
+- **VLM**: Groq API with Llama-3.2-11B Vision (Phase 2)
 - **Web Framework**: Streamlit
 - **Image Processing**: OpenCV, PIL
 - **Visualization**: Grad-CAM, Matplotlib
+- **PDF Generation**: ReportLab
 - **Data Science**: NumPy
 
 ## 📦 Installation
@@ -60,8 +76,9 @@ See the complete application workflow including:
 ### Prerequisites
 - Python 3.8+
 - pip package manager
+- (Optional) Groq API key for VLM explanations
 
-### Setup
+### Local Setup
 ```bash
 # Clone the repository
 git clone https://github.com/ashutosh8021/brain-tumor-classification.git
@@ -77,17 +94,56 @@ source env/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
+# (Optional) Set up environment variables for VLM
+# Copy .env.example to .env and add your Groq API key
+cp .env.example .env
+# Edit .env and set: GROQ_API_KEY=gsk_your_actual_key_here
+
 # Run the application
 streamlit run app.py
 ```
+
+### Streamlit Cloud Setup
+
+1. **Fork this repository** to your GitHub account
+
+2. **Deploy on Streamlit Cloud**:
+   - Go to [share.streamlit.io](https://share.streamlit.io)
+   - Connect your GitHub account
+   - Select this repository
+   - Click "Deploy"
+
+3. **Configure Secrets** (for VLM features):
+   - In Streamlit Cloud dashboard, go to App Settings → Secrets
+   - Add the following:
+   ```toml
+   GROQ_API_KEY = "gsk_your_actual_key_here"
+   ```
+   - Get your API key from: [console.groq.com/keys](https://console.groq.com/keys)
+
+**Note:** The app works fully without the API key - it will use template-based explanations as fallback.
+
+## 🌍 Environment Variables
+
+| Variable | Required | Description | Default |
+|----------|----------|-------------|---------|
+| `GROQ_API_KEY` | No | Groq API key for VLM explanations | None (uses template fallback) |
+
+**Setting Environment Variables:**
+- **Local Development**: Create `.env` file (see `.env.example`)
+- **Streamlit Cloud**: Add to App Settings → Secrets → `secrets.toml`
+- **Heroku/AWS**: Use platform-specific environment variable settings
 
 ## 📁 Project Structure
 
 ```
 brain-tumor-classification/
-├── app.py                          # Main Streamlit application
+├── app.py                          # Main Streamlit application v2.0
 ├── densenet121_brain_tumor_best.h5 # Trained DenseNet121 model
 ├── requirements.txt                # Python dependencies
+├── .env.example                    # Environment variables template
+├── .streamlit/
+│   └── secrets.toml               # Streamlit secrets template
 ├── README.md                      # Project documentation
 ├── .gitignore                     # Git ignore file
 └── screenshots/                   # Application screenshots
@@ -120,7 +176,138 @@ brain-tumor-classification/
 
 **Overall Accuracy**: 91.2% on validation dataset
 
-## � Key Features & Capabilities
+## 🚀 Phase 2 Features (v2.0)
+
+### 🤖 VLM-Powered Explanations
+
+The app now integrates **Vision Language Models (VLM)** via Groq API for AI-generated clinical explanations:
+
+- **Model**: Llama-3.2-11B Vision Preview
+- **Input**: Grad-CAM overlay image + classification results
+- **Output**: 3-4 sentence clinical explanation covering:
+  - What was detected and heatmap activation locations
+  - Supporting imaging features visible in the scan
+  - Uncertainty notes for low-confidence cases
+  - Clinical recommendations (e.g., specialist referral, follow-up imaging)
+- **Fallback**: Template-based explanations always available when VLM unavailable
+- **Configuration**: Environment variable only (no UI input field)
+
+**VLM Setup:**
+```bash
+# Option 1: Local development (.env file)
+GROQ_API_KEY=gsk_your_actual_key_here
+
+# Option 2: Streamlit Cloud (App Settings → Secrets)
+GROQ_API_KEY = "gsk_your_actual_key_here"
+```
+
+Get your free API key: [console.groq.com/keys](https://console.groq.com/keys)
+
+### ⚠️ Failure Detection System
+
+Automated quality control with three detection modes:
+
+| **Failure Type** | **Trigger Condition** | **Interpretation** | **Default Threshold** |
+|------------------|----------------------|-------------------|---------------------|
+| **Low Confidence** | Prediction confidence < threshold | Model uncertain about classification | 50% |
+| **High Entropy** | Shannon entropy > threshold | Probability distribution is flat/uncertain | 0.65 (normalized) |
+| **Borderline** | Top-2 margin < threshold | Two classes have similar probabilities | 20% |
+
+**How it works:**
+1. Every prediction is evaluated against all three criteria in order
+2. If any criterion triggers, case is logged as a failure
+3. User receives specific alert with recommendation
+4. Case appears in Failure Dashboard for review
+
+**Customizable Thresholds:**
+- Adjust via sidebar sliders in real-time
+- Thresholds persist within session
+- No configuration file needed
+
+### 📊 Failure Dashboard
+
+Track and analyze problematic cases:
+
+- **Metrics Overview**: Total failures, breakdown by type
+- **Class Distribution**: See which tumor types trigger most failures
+- **Case Log**: Expandable entries with full prediction data (newest first)
+- **Export**: Download failure log as JSON for external analysis
+- **Clear Log**: Reset dashboard with one-click (uses `st.rerun()`)
+- **Empty State**: Helpful table explaining failure types when no cases logged
+
+**Dashboard Fields per Case:**
+```json
+{
+  "timestamp": "2026-04-01T08:30:00.000Z",
+  "filename": "scan_123.jpg",
+  "predicted_class": "glioma",
+  "confidence": 48.3,
+  "failure_type": "low_confidence",
+  "uncertainty_score": 0.72,
+  "all_predictions": {
+    "glioma": 48.3,
+    "meningioma": 31.2,
+    "pituitary": 12.1,
+    "notumor": 8.4
+  }
+}
+```
+
+### 📋 Enhanced JSON Reports v2.0
+
+New comprehensive report structure:
+
+```json
+{
+  "report_version": "2.0",
+  "timestamp": "2026-04-01T08:30:00.000Z",
+  "scan_info": {
+    "predicted_class": "glioma",
+    "confidence_pct": 94.3,
+    "all_class_probabilities_pct": {
+      "glioma": 94.3,
+      "meningioma": 3.2,
+      "notumor": 1.5,
+      "pituitary": 1.0
+    },
+    "top2_margin_pct": 91.1
+  },
+  "explainability": {
+    "gradcam_high_activation_pct": 23.4,
+    "explanation_source": "vlm_llama32_groq",
+    "explanation_source_label": "Groq Llama-3.2-11B Vision",
+    "ai_explanation": "The model detected a glioma pattern..."
+  },
+  "reliability": {
+    "uncertainty_score": 0.18,
+    "uncertainty_label": "Low",
+    "is_failure_case": false,
+    "failure_type": null,
+    "reliability_passed": true
+  },
+  "model_info": {
+    "architecture": "DenseNet121",
+    "last_conv_layer": "conv5_block16_concat",
+    "input_size": "224x224",
+    "num_classes": 4,
+    "overall_accuracy": "91.2%"
+  }
+}
+```
+
+**Report Sections:**
+- **scan_info**: Prediction results with top-2 margin analysis
+- **explainability**: Grad-CAM metrics, VLM/template source, AI explanation
+- **reliability**: Uncertainty score (0-1), label (Low/Moderate/High), failure status
+- **model_info**: Technical specifications and performance
+
+**Download Filenames:**
+- JSON Reports: `brain_tumor_report_{class}_{YYYYMMDD_HHMMSS}.json`
+- PDF Reports: `brain_tumor_report_{class}_{YYYYMMDD_HHMMSS}.pdf`
+- Grad-CAM: `gradcam_{class}_{YYYYMMDD_HHMMSS}.png`
+- Failure Log: `failure_cases_{YYYYMMDD_HHMMSS}.json`
+
+## ✨ Key Features & Capabilities
 
 ### 🧠 Advanced AI Classification
 - **4-Class Detection**: Glioma, Meningioma, Pituitary Tumor, No Tumor
@@ -139,7 +326,7 @@ brain-tumor-classification/
 - **Intuitive Interface**: Simple drag-and-drop file upload
 - **Color-Coded Results**: Green (>80%), Yellow (50-80%), Red (<50%) confidence
 - **Progress Bars**: Visual representation of all class probabilities
-- **Download Reports**: Export analysis results in JSON format
+- **Download Reports**: Export analysis results in JSON and PDF formats
 
 ### 📚 Educational Content
 - **Medical Information**: Detailed descriptions of each tumor type
@@ -154,7 +341,7 @@ brain-tumor-classification/
 3. **⚡ Get Instant Results**: View predicted tumor type with confidence scores
 4. **🔍 Analyze Grad-CAM**: Examine AI decision-making through heatmap visualization
 5. **📋 Read Medical Info**: Learn about detected tumor type and characteristics
-6. **💾 Download Report**: Export results in JSON format with timestamps
+6. **💾 Download Report**: Export results in JSON or PDF format with timestamps
 
 ### Supported File Formats
 - JPEG (.jpg, .jpeg)
@@ -195,7 +382,7 @@ brain-tumor-classification/
 2. **View instant results** with predicted tumor type and confidence
 3. **Analyze Grad-CAM** to understand which areas influenced the AI decision
 4. **Read medical information** about the detected tumor type
-5. **Download reports** in JSON format with timestamps
+5. **Download reports** in JSON or PDF format with timestamps
 
 ## � Performance Metrics
 
