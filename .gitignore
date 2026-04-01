@@ -155,3 +155,9 @@ datasets/
 # Local config files
 config.local.py
 secrets.toml
+# Virtual environments
+env/
+venv/
+
+# VS Code
+.vscode/
