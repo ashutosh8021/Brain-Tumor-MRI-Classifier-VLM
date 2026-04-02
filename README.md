@@ -7,9 +7,30 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Groq AI](https://img.shields.io/badge/AI-Groq%20Llama--3.3-orange.svg)](https://groq.com)
 
+**Live App:** https://brain-tumor-mri-classifier-vlm.streamlit.app/
+
 > Advanced deep learning system for brain tumor classification using DenseNet121, Grad-CAM visualization, and AI-powered clinical explanations.
 
-![Brain Tumor Classifier Demo](screenshots/demo.png)
+![Brain Tumor Classifier Demo](screenshots/app_home.png)
+
+---
+
+## 🖼️ Screenshots
+
+**Home**
+![Home](screenshots/app_home.png)
+
+**Sample Picker**
+![Sample Picker](screenshots/app_sample_picker.png)
+
+**Results**
+![Results](screenshots/app_results.png)
+
+---
+
+## 📄 Sample Report
+
+- [Example PDF report](reports/brain_tumor_report_glioma_20260402_175155.pdf)
 
 ---
 
@@ -175,7 +196,9 @@ Brain-Tumor-MRI-Classifier-VLM/
 ├── CHANGELOG_v2.0.md              # Version 2.0 release notes
 ├── QUICK_REFERENCE.md             # User quick-start guide
 ├── LICENSE                         # MIT License
+├── reports/                         # Sample PDF reports
 ├── screenshots/                    # Demo images and screenshots
+├── sample_images/                  # Sample MRI scans for testing
 └── .streamlit/
     └── secrets.toml               # Streamlit Cloud secrets template
 ```
