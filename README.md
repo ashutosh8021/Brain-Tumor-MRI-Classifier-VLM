@@ -53,6 +53,11 @@
   - **Borderline Cases:** Identifies when top predictions are too close
 - Automated reliability scoring with uncertainty metrics
 
+**Failure Detection Thresholds (Defaults)**
+- **Confidence:** < 50%
+- **Entropy:** > 0.65 (normalized Shannon entropy)
+- **Top-2 Margin:** < 20%
+
 ### 📊 **Comprehensive Reporting**
 - **PDF Reports** with embedded images and detailed analysis
 - **JSON Exports** for integration with other systems
