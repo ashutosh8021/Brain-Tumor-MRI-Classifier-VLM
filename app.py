@@ -83,7 +83,7 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None
     try:
         # This is the EXACT working approach from marine classification
         grad_model = tf.keras.models.Model(
-            inputs=[model.inputs],
+            inputs=model.inputs,
             outputs=[model.get_layer(last_conv_layer_name).output, model.output]
         )
         
