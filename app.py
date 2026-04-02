@@ -767,8 +767,9 @@ with tab1:
     st.markdown("Upload an MRI scan for AI-powered analysis with VLM explanations and reliability scoring")
     
     uploaded_file = st.file_uploader("📁 Upload MRI Image (JPEG, PNG)", type=["jpg", "jpeg", "png"])
+    run_analysis = st.button("▶️ Run Analysis", type="primary", disabled=uploaded_file is None)
     
-    if uploaded_file is not None:
+    if uploaded_file is not None and run_analysis:
         filename = uploaded_file.name
         
         # Load and analyze image
@@ -956,7 +957,10 @@ with tab1:
     
     else:
         # Empty state
-        st.info("👆 Upload an MRI scan above to begin analysis")
+        if uploaded_file is not None:
+            st.info("👆 Click 'Run Analysis' to start classification")
+        else:
+            st.info("👆 Upload an MRI scan above to begin analysis")
         st.markdown("""
         ### Features
         - **4-Class Classification**: Glioma, Meningioma, No Tumor, Pituitary
