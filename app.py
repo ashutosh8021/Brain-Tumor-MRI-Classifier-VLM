@@ -20,6 +20,8 @@ import base64
 from datetime import datetime
 import json
 import os
+import urllib.request
+import zipfile
 
 # Import TensorFlow components
 try:
@@ -638,6 +640,31 @@ def create_pdf_report(pred_class, confidence, preds, class_names,
 # MODEL LOADING
 # ============================================================================
 
+MODEL_FILENAME = "densenet121_brain_tumor_best.h5"
+MODEL_ZIP_URL = "https://github.com/ashutosh8021/Brain-Tumor-MRI-Classifier-VLM/releases/download/v2.0/densenet121_brain_tumor_best.zip"
+MODEL_ZIP_NAME = "densenet121_brain_tumor_best.zip"
+
+
+def ensure_model_file():
+    if os.path.exists(MODEL_FILENAME):
+        return
+
+    with st.spinner("Downloading model weights..."):
+        urllib.request.urlretrieve(MODEL_ZIP_URL, MODEL_ZIP_NAME)
+        with zipfile.ZipFile(MODEL_ZIP_NAME, "r") as zf:
+            h5_members = [name for name in zf.namelist() if name.endswith(".h5")]
+            if not h5_members:
+                raise FileNotFoundError("No .h5 file found in model zip")
+            extracted_member = h5_members[0]
+            zf.extract(extracted_member, ".")
+            extracted_path = os.path.join(".", extracted_member)
+            if extracted_path != MODEL_FILENAME:
+                os.replace(extracted_path, MODEL_FILENAME)
+    try:
+        os.remove(MODEL_ZIP_NAME)
+    except OSError:
+        pass
+
 class PatchedInputLayer(tf.keras.layers.InputLayer):
     def __init__(self, *args, **kwargs):
         if "batch_shape" in kwargs and "batch_input_shape" not in kwargs:
@@ -649,8 +676,9 @@ class PatchedInputLayer(tf.keras.layers.InputLayer):
 def load_densenet_model():
     try:
         with st.spinner("Loading AI model..."):
+            ensure_model_file()
             model = load_model(
-                "densenet121_brain_tumor_best.h5",
+                MODEL_FILENAME,
                 custom_objects={"InputLayer": PatchedInputLayer},
                 compile=False,
             )
