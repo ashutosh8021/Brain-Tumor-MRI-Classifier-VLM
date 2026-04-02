@@ -707,6 +707,30 @@ tumor_info = {
     "pituitary": {"severity": "Medium", "color": "🟠", "treatment": "Surgery or Medication"}
 }
 
+# Sample images (optional)
+sample_dir = "sample_images"
+sample_files = []
+if os.path.isdir(sample_dir):
+    sample_files = sorted(
+        [
+            name for name in os.listdir(sample_dir)
+            if name.lower().endswith((".jpg", ".jpeg", ".png"))
+        ]
+    )
+
+sample_prefix_map = {
+    "Te-gl": "Glioma",
+    "Te-me": "Meningioma",
+    "Te-no": "No Tumor",
+    "Te-pi": "Pituitary",
+}
+sample_display = []
+for name in sample_files:
+    prefix = name.split("_")[0]
+    label = sample_prefix_map.get(prefix, "Other")
+    sample_display.append((f"{label}/{name}", name))
+sample_display_map = {display: filename for display, filename in sample_display}
+
 # ============================================================================
 # UI LAYOUT
 # ============================================================================
@@ -738,6 +762,16 @@ with st.sidebar:
     **Explainability:** Grad-CAM  
     **AI Engine:** Groq Llama-3.3-70B
     """)
+
+    st.markdown("---")
+    st.markdown("#### 🧪 Test Images")
+    source_mode = st.radio("Source", ["Upload", "Sample"], horizontal=True)
+    sample_choice = None
+    if source_mode == "Sample":
+        if sample_display:
+            sample_choice = st.selectbox("Choose sample", list(sample_display_map.keys()))
+        else:
+            st.caption("No sample images found in sample_images/")
     
     st.markdown("---")
     st.markdown("#### ℹ️ About")
@@ -766,27 +800,11 @@ with tab1:
     st.title("🧠 Brain Tumor MRI Classification & Analysis v2.0")
     st.markdown("Upload an MRI scan for AI-powered analysis with VLM explanations and reliability scoring")
 
-    sample_dir = "sample_images"
-    sample_files = []
-    if os.path.isdir(sample_dir):
-        sample_files = sorted(
-            [
-                name for name in os.listdir(sample_dir)
-                if name.lower().endswith((".jpg", ".jpeg", ".png"))
-            ]
-        )
-
-    source_mode = st.radio("Image source", ["Upload", "Sample"], horizontal=True)
     uploaded_file = None
-    sample_choice = None
-
     if source_mode == "Upload":
         uploaded_file = st.file_uploader("📁 Upload MRI Image (JPEG, PNG)", type=["jpg", "jpeg", "png"])
-    else:
-        if sample_files:
-            sample_choice = st.selectbox("Choose a sample image", sample_files)
-        else:
-            st.info("No sample images found in sample_images/")
+    elif sample_choice is not None:
+        sample_choice = sample_display_map.get(sample_choice, sample_choice)
 
     run_disabled = uploaded_file is None and sample_choice is None
     run_analysis = st.button("▶️ Run Analysis", type="primary", disabled=run_disabled)
@@ -986,7 +1004,7 @@ with tab1:
         if uploaded_file is not None or sample_choice is not None:
             st.info("👆 Click 'Run Analysis' to start classification")
         else:
-            st.info("👆 Upload an MRI scan above to begin analysis")
+            st.info("👆 Upload an MRI scan or pick a sample from the sidebar")
         st.markdown("""
         ### Features
         - **4-Class Classification**: Glioma, Meningioma, No Tumor, Pituitary
