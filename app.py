@@ -23,10 +23,13 @@ import os
 import urllib.request
 import zipfile
 
+os.environ.setdefault("KERAS_BACKEND", "tensorflow")
+
 # Import TensorFlow components
 try:
     import tensorflow as tf
-    from tensorflow.keras.models import load_model
+    import keras
+    from keras.models import load_model
     physical_devices = tf.config.list_physical_devices('GPU')
     if physical_devices:
         tf.config.experimental.set_memory_growth(physical_devices[0], True)
@@ -665,7 +668,7 @@ def ensure_model_file():
     except OSError:
         pass
 
-class PatchedInputLayer(tf.keras.layers.InputLayer):
+class PatchedInputLayer(keras.layers.InputLayer):
     def __init__(self, *args, **kwargs):
         if "batch_shape" in kwargs and "batch_input_shape" not in kwargs:
             kwargs["batch_input_shape"] = kwargs.pop("batch_shape")
@@ -679,7 +682,10 @@ def load_densenet_model():
             ensure_model_file()
             model = load_model(
                 MODEL_FILENAME,
-                custom_objects={"InputLayer": PatchedInputLayer},
+                custom_objects={
+                    "InputLayer": PatchedInputLayer,
+                    "DTypePolicy": keras.mixed_precision.DTypePolicy,
+                },
                 compile=False,
             )
         return model
