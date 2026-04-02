@@ -70,8 +70,8 @@ The system classifies brain MRI scans into **4 categories**:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/ashutosh8021/BRAIN-TUMOR-CLASSIFIER-v-2.0.git
-   cd BRAIN-TUMOR-CLASSIFIER-v-2.0
+   git clone https://github.com/ashutosh8021/Brain-Tumor-MRI-Classifier-VLM.git
+   cd Brain-Tumor-MRI-Classifier-VLM
    ```
 
 2. **Install dependencies**
@@ -166,7 +166,7 @@ The system classifies brain MRI scans into **4 categories**:
 ## 📁 Project Structure
 
 ```
-BRAIN-TUMOR-CLASSIFIER-v-2.0/
+Brain-Tumor-MRI-Classifier-VLM/
 ├── app.py                          # Main Streamlit application (964 lines)
 ├── densenet121_brain_tumor_best.h5 # Trained model weights (51 MB)
 ├── requirements.txt                # Python dependencies
@@ -192,7 +192,7 @@ Follow the **Quick Start** guide above.
 1. **Push to GitHub** (already done!)
 2. **Go to [share.streamlit.io](https://share.streamlit.io)**
 3. **Deploy app:**
-   - Repository: `ashutosh8021/BRAIN-TUMOR-CLASSIFIER-v-2.0`
+   - Repository: `ashutosh8021/Brain-Tumor-MRI-Classifier-VLM`
    - Branch: `main`
    - Main file: `app.py`
 4. **Add secrets:**
@@ -301,7 +301,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Ashutosh** - [@ashutosh8021](https://github.com/ashutosh8021)
 
-**Project Link:** [https://github.com/ashutosh8021/BRAIN-TUMOR-CLASSIFIER-v-2.0](https://github.com/ashutosh8021/BRAIN-TUMOR-CLASSIFIER-v-2.0)
+**Project Link:** [https://github.com/ashutosh8021/Brain-Tumor-MRI-Classifier-VLM](https://github.com/ashutosh8021/Brain-Tumor-MRI-Classifier-VLM)
 
 ---
 
@@ -309,7 +309,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If this project helped you, please consider giving it a ⭐!
 
-[![Star History](https://api.star-history.com/svg?repos=ashutosh8021/BRAIN-TUMOR-CLASSIFIER-v-2.0&type=Date)](https://star-history.com/#ashutosh8021/BRAIN-TUMOR-CLASSIFIER-v-2.0&Date)
+[![Star History](https://api.star-history.com/svg?repos=ashutosh8021/Brain-Tumor-MRI-Classifier-VLM&type=Date)](https://star-history.com/#ashutosh8021/Brain-Tumor-MRI-Classifier-VLM&Date)
 
 ---
 

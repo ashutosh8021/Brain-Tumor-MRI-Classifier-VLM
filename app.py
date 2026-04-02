@@ -55,12 +55,6 @@ try:
         except:
             GROQ_API_KEY = None
     
-    # DEBUG: Show what we got (remove this after testing)
-    if GROQ_API_KEY:
-        print(f"DEBUG: API Key loaded: {GROQ_API_KEY[:20]}... (length: {len(GROQ_API_KEY)})")
-    else:
-        print("DEBUG: API Key NOT loaded from environment or secrets!")
-    
     GROQ_AVAILABLE = GROQ_API_KEY is not None
     VLM_ENABLED = GROQ_AVAILABLE and bool(GROQ_API_KEY)
 except ImportError:
