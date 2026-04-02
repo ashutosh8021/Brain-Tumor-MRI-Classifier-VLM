@@ -638,11 +638,22 @@ def create_pdf_report(pred_class, confidence, preds, class_names,
 # MODEL LOADING
 # ============================================================================
 
+class PatchedInputLayer(tf.keras.layers.InputLayer):
+    def __init__(self, *args, **kwargs):
+        if "batch_shape" in kwargs and "batch_input_shape" not in kwargs:
+            kwargs["batch_input_shape"] = kwargs.pop("batch_shape")
+        super().__init__(*args, **kwargs)
+
+
 @st.cache_resource
 def load_densenet_model():
     try:
         with st.spinner("Loading AI model..."):
-            model = load_model("densenet121_brain_tumor_best.h5")
+            model = load_model(
+                "densenet121_brain_tumor_best.h5",
+                custom_objects={"InputLayer": PatchedInputLayer},
+                compile=False,
+            )
         return model
     except Exception as e:
         st.error(f"❌ Error loading model: {e}")
