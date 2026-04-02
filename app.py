@@ -765,15 +765,41 @@ tab1, tab2 = st.tabs(["📊 Analysis", "⚠️ Failure Dashboard"])
 with tab1:
     st.title("🧠 Brain Tumor MRI Classification & Analysis v2.0")
     st.markdown("Upload an MRI scan for AI-powered analysis with VLM explanations and reliability scoring")
-    
-    uploaded_file = st.file_uploader("📁 Upload MRI Image (JPEG, PNG)", type=["jpg", "jpeg", "png"])
-    run_analysis = st.button("▶️ Run Analysis", type="primary", disabled=uploaded_file is None)
-    
-    if uploaded_file is not None and run_analysis:
-        filename = uploaded_file.name
-        
+
+    sample_dir = "sample_images"
+    sample_files = []
+    if os.path.isdir(sample_dir):
+        sample_files = sorted(
+            [
+                name for name in os.listdir(sample_dir)
+                if name.lower().endswith((".jpg", ".jpeg", ".png"))
+            ]
+        )
+
+    source_mode = st.radio("Image source", ["Upload", "Sample"], horizontal=True)
+    uploaded_file = None
+    sample_choice = None
+
+    if source_mode == "Upload":
+        uploaded_file = st.file_uploader("📁 Upload MRI Image (JPEG, PNG)", type=["jpg", "jpeg", "png"])
+    else:
+        if sample_files:
+            sample_choice = st.selectbox("Choose a sample image", sample_files)
+        else:
+            st.info("No sample images found in sample_images/")
+
+    run_disabled = uploaded_file is None and sample_choice is None
+    run_analysis = st.button("▶️ Run Analysis", type="primary", disabled=run_disabled)
+
+    if run_analysis and (uploaded_file is not None or sample_choice is not None):
+        if uploaded_file is not None:
+            filename = uploaded_file.name
+            image = Image.open(uploaded_file)
+        else:
+            filename = sample_choice
+            image = Image.open(os.path.join(sample_dir, sample_choice))
+
         # Load and analyze image
-        image = Image.open(uploaded_file)
         img_array = get_img_array(image)
         preds = model.predict(img_array, verbose=0)
         pred_idx = np.argmax(preds)
@@ -957,7 +983,7 @@ with tab1:
     
     else:
         # Empty state
-        if uploaded_file is not None:
+        if uploaded_file is not None or sample_choice is not None:
             st.info("👆 Click 'Run Analysis' to start classification")
         else:
             st.info("👆 Upload an MRI scan above to begin analysis")
